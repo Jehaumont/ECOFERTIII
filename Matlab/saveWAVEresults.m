@@ -86,7 +86,6 @@ tflnorg = soilStateCilinderParams.tflnorg;
 
 % STORE INFORMATION IN TEMPORARY VARIABLES
 
-
 % soil water content information
 WCSoil_log(:,end+1) = WC.';
 PressHSoil(:,end+1) = ph.';

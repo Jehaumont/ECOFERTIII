@@ -226,6 +226,7 @@ for JF = 1:NFAST
     if CO2L>1500
         PMAX = (TAU(1) * 1500) + (TAU(2) * (CO2L-1500));
     end
+    
     % reduction of Pmax at extreme temperatures
     PMAX = PMAX * interp1(TempEffect(:,2),TempEffect(:,1),TMPA);
     
@@ -262,11 +263,11 @@ for JF = 1:NFAST
     % Effect of temperature on maintenance respiration on hourly basis
     RMAINTF = (RMRL * (DMLeaf+DMStem)+RMRF * DMCurd) * (Q10^(0.1 * TMPA-2.0));
     
-    %integration of variables on 24 hours
+    % integration of variables on 24 hours
     GP = GP + GPF * DTFAST;
     RMAINT = RMAINT + RMAINTF * DTFAST;
     
-    %calculate average day temperature
+    % calculate average day temperature
     Tsum = Tsum + TMPA;
 end
 % DAILY LOOP

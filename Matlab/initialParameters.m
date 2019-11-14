@@ -1,5 +1,5 @@
 function initialParameters(savePath)
-addpath('D:\STACK_server\PhD\WikiLeeks\WP2\ECOFERT_Sarah\Precision-Agriculture-Ecofert\ECOFERT\ECOFERT_Sarah\Matlab');
+addpath('D:\STACK_server\PhD\WikiLeeks\WP2\ECOFERTIII\Matlab');
 % define the folder where you want to save all the input files
 
 %% check for existence of path

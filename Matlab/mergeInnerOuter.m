@@ -53,7 +53,7 @@ elseif simulationSettings.flag_double_sim == 0
     
     for i = 1:numel(SoluteFields)
        [nRow, ~] = size(soilOuterStateParams.(SoluteFields{1}(1)));
-       soilInnerStateParams.(SoluteFields{i}(1))(:,end+1) = [t; zeros(nRow-1, 1)];
+       soilInnerStateParams.(SoluteFields{i}(1))(:,end+1) = [t; soilInnerStateParams.(SoluteFields{i}(1))(2:end,end)];
     end
    
     [nRow, ~] = size(soilOuterStateParams.N_reaction_balance);
@@ -80,7 +80,9 @@ for i = 1:numel(SoluteFields)
     
     % time
     soilCommonStateParams.(SoluteFields{i}(1))(1,end+1)= soilOuterStateParams.(SoluteFields{i}(1))(1,end);
-    
+    if simulationSettings.t == datenum(2009, 1, 1) + 60
+        disp('')
+    end
     %Inflow (2) & outflow (3)
     soilCommonStateParams.(SoluteFields{i}(1))(2:3,end)= soilCommonStateParams.(SoluteFields{i}(1))(2:3,end-1)+...
         (soilOuterStateParams.(SoluteFields{i}(1))(2:3,end) -...

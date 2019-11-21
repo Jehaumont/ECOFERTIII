@@ -31,6 +31,15 @@ if simulationSettings.flag_double_sim == 1
     soilCommonStateParams.minerm =  soilOuterStateParams.minerm(:,2)*fractSoil +...
         soilInnerStateParams.minerm(:,2)*fractPlant;
     
+    % water balance
+    soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
+    soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
+                                                      (soilInnerStateParams.water_balance(2:4, end) -...
+                                                       soilInnerStateParams.water_balance(2:4, end-1)) * fractPlant +...
+                                                      (soilOuterStateParams.water_balance(2:4, end) -...
+                                                       soilOuterStateParams.water_balance(2:4, end-1)) * fractSoil;
+
+    
 elseif simulationSettings.flag_double_sim == 0
     % Soil organic matter
     soilCommonStateParams.soil_om =  soilOuterStateParams.soil_om*fractSoil;
@@ -46,6 +55,12 @@ elseif simulationSettings.flag_double_sim == 0
     
     % Mineralised organic matter
     soilCommonStateParams.minerm =  soilOuterStateParams.minerm(:,2)*fractSoil;
+    
+    % water balance
+    soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
+    soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
+                                                      (soilOuterStateParams.water_balance(2:4, end) -...
+                                                       soilOuterStateParams.water_balance(2:4, end-1)) * fractSoil;
     
     % Zeros should be added to balance variables such that after planting
     % the balance is calculated correctly 

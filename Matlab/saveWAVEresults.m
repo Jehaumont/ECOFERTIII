@@ -22,7 +22,7 @@ cum_sink_wat = soilStateCilinderParams.cum_sink_wat1;
 cum_sink_wat2 = soilStateCilinderParams.cum_sink_wat2;
 cum_top_flxs = soilStateCilinderParams.cum_top_flxs;
 cum_trans = soilStateCilinderParams.cum_trans;
-daily_balance = soilStateCilinderParams.daily_balance;
+water_balance = soilStateCilinderParams.water_balance;
 dsol = soilStateCilinderParams.dsol;
 epa = soilStateCilinderParams.epa;
 esa = soilStateCilinderParams.esa;
@@ -144,7 +144,7 @@ end
 
 water_storage(end+1) = sum(WC.*dx);
 
-daily_balance(:,end+1)=[t top_flux(end), bot_flux(end), cum_trans(end),sum(wcmo)-stock_initial]';
+water_balance(:,end+1)=[t top_flux(end), bot_flux(end), cum_trans(end), sum(wcmo)-stock_initial]';
 
 % nitrogen
 
@@ -205,7 +205,7 @@ soilStateCilinderParams.evap = evap;
 soilStateCilinderParams.cum_evap = cum_evap;
 soilStateCilinderParams.cum_infiltr = cum_infiltr;
 soilStateCilinderParams.water_storage = water_storage;
-soilStateCilinderParams.daily_balance = daily_balance;
+soilStateCilinderParams.water_balance = water_balance;
 soilStateCilinderParams.CarbMan_log = CarbMan_log;
 soilStateCilinderParams.NitMan_log = NitMan_log;
 soilStateCilinderParams.CarbLit_log = CarbLit_log;
@@ -237,7 +237,7 @@ fieldNames = {'JulianDay', 'WCSoil_log', 'PressHSoil', 'WatSinkSoil_log', 'bot_f
               'UreumBalance_log', 'NH4Soil_log', 'NH4Conc_log', 'NH4Balance_log',...
               'NO3Soil_log', 'NO3Conc_log', 'NO3Balance_log', 'cum_nit_sink',...
               'N_reaction_balance', 'TSoil','extra_sol', 'extra_water', ...
-              'daily_balance'};           
+              'water_balance'};           
 
 if simulationSettings.t == simulationSettings.tmax | soilStateCilinderParams.STOP
     soilStateCilinderParams = dataLog(soilStateCilinderParams, type,...

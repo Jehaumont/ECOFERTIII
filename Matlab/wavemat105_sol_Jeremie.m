@@ -113,14 +113,17 @@ if simulationSettings.simNitroFlag
     soilInnerStateParams.tcorgs = sum((soilInnerStateParams.soil_om(:,1)) +...
                                        soilInnerStateParams.soil_om(:,3) +...
                                        soilInnerStateParams.soil_om(:,5));
+                                   
     % total organic nitrogen concentration in the inner cilinder
     soilInnerStateParams.tnorgs = sum((soilInnerStateParams.soil_om(:,2)) +...
                                        soilInnerStateParams.soil_om(:,4) +...
                                        soilInnerStateParams.soil_om(:,6));
+                                   
     % total organic carbon concentration in the outer cilinder
     soilOuterStateParams.tcorgs = sum((soilInnerStateParams.soil_om(:,1)) +...
                                        soilInnerStateParams.soil_om(:,3) +...
                                        soilInnerStateParams.soil_om(:,5));
+                                   
     % total organic nitrogen concetration in the outer cilinder
     soilOuterStateParams.tnorgs = sum((soilInnerStateParams.soil_om(:,2)) +...
                                        soilInnerStateParams.soil_om(:,4) +...
@@ -147,11 +150,9 @@ harvest_date = sort([managementSettings.hDateCauli;managementSettings.hDateLeek]
     
 %% MODEL SIMULATION
 calculationtime_day = [];
-while simulationSettings.t < simulationSettings.tmax
+while simulationSettings.t <= simulationSettings.tmax
     tic
-    if simulationSettings.t-simulationSettings.tstart == 91
-        disp('')
-    end
+
     % calculate hydraulic properties based on the Weynats pedo transfer function
     if simulationSettings.PTFWeynants
         soilConsParams = PTFWeynants(simulationSettings,soilCommonStateParams,soilConsParams);
@@ -180,13 +181,13 @@ while simulationSettings.t < simulationSettings.tmax
         end
         
         if simulationSettings.t == plant_date(simulationSettings.ncrop)      
-            if strcmp(managementSettings.croptype(simulationSettings.ncrop),"Cauli")
+            if strcmp(managementSettings.crop_rotation(simulationSettings.ncrop),"Cauli")
                 % Initialize cauliflower growth
                 
                 cropStateParams = cauliStateIni;
                 cropConsParams = cauliConsParams;
 
-            elseif strcmp(managementSettings.croptype(simulationSettings.ncrop),"Leek")
+            elseif strcmp(managementSettings.crop_rotation(simulationSettings.ncrop),"Leek")
                 % Initialize leek growth
                 
                 cropStateParams = leekStateIni;    
@@ -195,8 +196,8 @@ while simulationSettings.t < simulationSettings.tmax
         end
         
         %% SELECT CROP FOR SIMULATION
-        if  strcmp(managementSettings.croptype(simulationSettings.ncrop),"Cauli")
-            
+        if  strcmp(managementSettings.crop_rotation(simulationSettings.ncrop), "Cauli")
+                        
             %Run cauli simulation for one day
             [cropStateParams,soilInnerStateParams,soilOuterStateParams] =...
                                             run_model_cauli(cauliConsParams,...
@@ -207,16 +208,12 @@ while simulationSettings.t < simulationSettings.tmax
                                             soilInnerStateParams,soilOuterStateParams);
             
             if any(managementSettings.hDateCauli == simulationSettings.t)
-                date = datevec(simulationSettings.t);
-                if date(1) == 1971
-                    disp('')
-                end
                 cropStateParams = dataLog(cropStateParams, "Cauli", fileSettings, "Force");
             else
                 cropStateParams = dataLog(cropStateParams, "Cauli", fileSettings);
             end
             
-        elseif strcmp(managementSettings.croptype(simulationSettings.ncrop),"Leek")
+        elseif strcmp(managementSettings.crop_rotation(simulationSettings.ncrop), "Leek")
             
             % run leek simulation model for 1 day
             [cropStateParams,soilInnerStateParams,soilOuterStateParams] =...
@@ -232,10 +229,6 @@ while simulationSettings.t < simulationSettings.tmax
                                                            soilOuterStateParams);
             
             if any(managementSettings.hDateLeek == simulationSettings.t)
-                date = datevec(simulationSettings.t);
-                if date(1) == 1971
-                    disp('')
-                end
                 
                 cropStateParams = dataLog(cropStateParams, "Leek", fileSettings, "Force");
             else
@@ -253,14 +246,13 @@ while simulationSettings.t < simulationSettings.tmax
     elseif ~simulationSettings.flag_double_sim
         
         % soil simulation when no plant is on the field
-        cropConsParams.crop_type = NaN;
         cropConsParams.rorad = cauliConsParams.rorad;
         cropConsParams.rd0 = cauliConsParams.rd0;
         cropConsParams.g = cauliConsParams.g;
         cropConsParams.rdens0 = cauliConsParams.rdens0;
         cropStateParams.TotRootDepth = 0;
         index = climateState.ET0_time== simulationSettings.t;
-        soilInnerStateParams.esa = 0;   %mm to cm
+        soilInnerStateParams.esa = 0;  
         soilInnerStateParams.epa = 0; 
         soilOuterStateParams.esa = climateState.ET0_cm_per_day(index);
         soilOuterStateParams.epa = 0;
@@ -287,7 +279,7 @@ while simulationSettings.t < simulationSettings.tmax
     soilOuterStateParams.JulianDay(end+1) = simulationSettings.t;
     soilCommonStateParams.JulianDay(end+1) = simulationSettings.t;
     
-    while soilOuterStateParams.numboolean == 0 && simulationSettings.t<simulationSettings.tmax
+    while soilOuterStateParams.numboolean == 0 && simulationSettings.t<=simulationSettings.tmax
         if round(simulationSettings.t)== simulationSettings.t
             
             
@@ -482,7 +474,7 @@ while simulationSettings.t < simulationSettings.tmax
     % Output of soil model to crop model
     if ~parallelFlag
         waitbar(progress/100,WAITBAR,[string(['simulating day ',num2str(day)]);strcat(num2str(progress),'% of the simulation is completed');...
-            "CALCULATING SOIL OUTPUT TOWARDS CROP MODEL"],'Name',"ECOFERT simulation",'height',500)
+            "CALCULATING SOIL OUTPUT TOWARDS CROP MODEL"],'Name',"ECOFERT simulation",'height', 500)
         
         if getappdata(WAITBAR,'canceling')
             delete(WAITBAR)
@@ -490,19 +482,21 @@ while simulationSettings.t < simulationSettings.tmax
                 ' progress are stored in ',char(ResultsPath)])
         end
     end
-
-    crop_type = cropConsParams.crop_type; % select the right plant density based on the loaded crop parameters
     
-    if crop_type == 1
-        PLM2 = managementSettings.PLM2Cauli;
-        soilCommonStateParams.NSupply = soilInnerStateParams.tot_upt*fractPlant_new/PLM2*10^4;
+    try
+        if  strcmpi(managementSettings.crop_rotation(simulationSettings.ncrop), "Cauli")
+            PLM2 = managementSettings.PLM2Cauli;
+            soilCommonStateParams.NSupply = soilInnerStateParams.tot_upt*fractPlant_new/PLM2*10^4;
 
-    elseif crop_type == 2
-        PLM2 = managementSettings.PLM2Leek;
-        soilCommonStateParams.NSupply = soilInnerStateParams.tot_upt*fractPlant_new/PLM2*10^4;
+        elseif strcmpi(managementSettings.crop_rotation(simulationSettings.ncrop), "Leek")
+            PLM2 = managementSettings.PLM2Leek;
+            soilCommonStateParams.NSupply = soilInnerStateParams.tot_upt*fractPlant_new/PLM2*10^4;
 
+        end
+    catch
+        % no crop is on the field, so no nitrogen supply for the crop
+        soilCommonStateParams.NSupply = [];
     end
-    
 	%reset tot_upt for the next day
 	soilInnerStateParams.tot_upt = 0;
     soilOuterStateParams.tot_upt = 0;
@@ -526,6 +520,7 @@ while simulationSettings.t < simulationSettings.tmax
     if simulationSettings.t == simulationSettings.tmax | (soilInnerStateParams.STOP | soilOuterStateParams.STOP)
         soilCommonStateParams = dataLog(soilCommonStateParams, "SoilCommonStateParams",...
             fileSettings, 'Force', fieldNames);
+        disp('forced save')
     else
        soilCommonStateParams = dataLog(soilCommonStateParams, "SoilCommonStateParams",...
             fileSettings, false, fieldNames);
@@ -651,10 +646,6 @@ while simulationSettings.t < simulationSettings.tmax
         else
             managementSettings.irri = 0;
         end
-        %------------------------------------------------------------------
-        
-        % Calculation of fertilizer advice
-        % still to be implemented
         
     end
     if (any(simulationSettings.t == sort(reshape(managementSettings.fertMomentCauli,...

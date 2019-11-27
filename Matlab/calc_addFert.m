@@ -15,9 +15,6 @@ function [soilInnerStateParams,soilOuterStateParams] = calc_addFert(cropStatePar
 % reaminNmin: remaining N concentration in soil [g/cm²] 
 % method: method for calculating TV
 %         "N_pre","KNS","KNS60","FAD","BD"
-% cropType: which crop is planted 
-%           1: cauliflower
-%           2: leek
 % timeNextFert: date which a next fertilization moment is planned [Julinan day[]
 %               = (i+1)-th fertilization (if another moment in cycle planned)
 %               = harvest date           (if no other moment in cycle planned)
@@ -59,12 +56,11 @@ tcsolo = soilCommonStateParams.tcsolo; %[g/cm²]
 % CALCULATION OF THE FERTILIZER ADDITION
 if any(fertMoment(:,1)-t == 1)
     
-    idx = find(fertMoment(:,1)-t ==1); % the current time should be only 1 day before the fertilization moment
-    cropType = fertMoment(idx,2);
+    idx = find(fertMoment(:,1)-t == 1); % the current time should be only 1 day before the fertilization moment
     timeNextHarvest = harvest_date(find(t+1>=plant_date & t<=harvest_date,1,'last')); % find the date of the next harvest
-    
+    cropType = fertMoment(idx,2);
     try
-        timeNextFert = fertMoment(idx+1,1); % find the date of the next moment to apply fertilizer
+        timeNextFert = fertMoment(idx+1, 1); % find the date of the next moment to apply fertilizer
     catch
         timeNextFert =  harvest_date(find(t+1 >= plant_date & t<=harvest_date,1,'last'))+1;
     end
@@ -80,9 +76,10 @@ if any(fertMoment(:,1)-t == 1)
 end
     
 % DETERMINE THE TARGET VALUE FOR FERTILIZATION
-if cropType == 1 % if cauliflower is on the field    
+% if cauliflower is on the field    
+if cropType == 1
     switch method
-        case "FIX3"
+        case "FIX"
             % fixed target values no consideration of current soil nitrogen
             % content
             soilSampleFlag = 0; 
@@ -95,7 +92,7 @@ if cropType == 1 % if cauliflower is on the field
             end
             TV = TV(index);
         
-        case "FIX3_50min"
+        case "FIX_50min"
             soilSampleFlag = 0;
             TV = [65, 12.5];
             
@@ -106,7 +103,7 @@ if cropType == 1 % if cauliflower is on the field
             end
             TV = TV(index);
         
-        case "FIX3_50plus"
+        case "FIX_50plus"
             soilSampleFlag = 0;
             TV = [195, 37.5];
             
@@ -154,21 +151,21 @@ if cropType == 1 % if cauliflower is on the field
                    'is unknown. Check calc_addFert for possible methods'])
     end
     
-    
-elseif cropType == 2 % if leek is on the field
+% if leek is on the field
+elseif cropType==2
     
     switch method
-        case "FIX3"
+        case "FIX"
             % fixed target values no consideration of current soil nitrogen
             % content
             soilSampleFlag = 0; 
             TV = 100;
         
-        case "FIX3_50min"
+        case "FIX_50min"
             soilSampleFlag = 0;
             TV = 50;
             
-        case "FIX3_50plus"
+        case "FIX_50plus"
             soilSampleFlag = 0;
             TV = 150;
         
@@ -226,10 +223,6 @@ addFert = (TV-Nremaining)/10^5; % convert kg/ha to g/cm²
 
 if addFert < 0
     addFert = 0;
-end
-
-if isnan(addFert)
-    disp('')
 end
 
 switch managementSettings.fertStrategy

@@ -32,13 +32,19 @@ if simulationSettings.flag_double_sim == 1
         soilInnerStateParams.minerm(:,2)*fractPlant;
     
     % water balance
-    soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
-    soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
-                                                      (soilInnerStateParams.water_balance(2:4, end) -...
-                                                       soilInnerStateParams.water_balance(2:4, end-1)) * fractPlant +...
-                                                      (soilOuterStateParams.water_balance(2:4, end) -...
-                                                       soilOuterStateParams.water_balance(2:4, end-1)) * fractSoil;
+    if soilCommonStateParams.water_balance
+        soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
+        soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
+                                                          (soilInnerStateParams.water_balance(2:4, end) -...
+                                                           soilInnerStateParams.water_balance(2:4, end-1)) * fractPlant +...
+                                                          (soilOuterStateParams.water_balance(2:4, end) -...
+                                                           soilOuterStateParams.water_balance(2:4, end-1)) * fractSoil;
+    else
+        soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
+        soilCommonStateParams.water_balance(2:4,end) =  soilInnerStateParams.water_balance(2:4, end) * fractPlant +...
+                                                          soilOuterStateParams.water_balance(2:4, end) * fractSoil;
 
+    end
     
 elseif simulationSettings.flag_double_sim == 0
     % Soil organic matter
@@ -57,10 +63,16 @@ elseif simulationSettings.flag_double_sim == 0
     soilCommonStateParams.minerm =  soilOuterStateParams.minerm(:,2)*fractSoil;
     
     % water balance
-    soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
-    soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
-                                                      (soilOuterStateParams.water_balance(2:4, end) -...
-                                                       soilOuterStateParams.water_balance(2:4, end-1)) * fractSoil;
+    if soilCommonStateParams.water_balance % if soilCommonState.water_balance is not empty
+        soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
+        soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
+                                                          (soilOuterStateParams.water_balance(2:4, end) -...
+                                                           soilOuterStateParams.water_balance(2:4, end-1)) * fractSoil;
+        
+    else % if soilCommonState.water_balance is empty
+        soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
+        soilCommonStateParams.water_balance(2:4,end) = soilOuterStateParams.water_balance(2:4, end) * fractSoil;                                                       
+    end
     
     % Zeros should be added to balance variables such that after planting
     % the balance is calculated correctly 

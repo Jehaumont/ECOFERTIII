@@ -1,4 +1,4 @@
-function simulationSettings = find_cropnumber (managementSettings,simulationSettings)
+function simulationSettings = find_cropnumber (managementSettings, simulationSettings)
 %% DOCUMENTATION
 % This function find the number of the rotation which is being simulated at
 % moment t. If no crop is being simulated the function returns NaN.
@@ -8,7 +8,7 @@ function simulationSettings = find_cropnumber (managementSettings,simulationSett
 harvest_date = sort([managementSettings.hDateCauli;managementSettings.hDateLeek]); % set all harvest dates in chronological order
 plant_date = sort([managementSettings.pDateCauli;managementSettings.pDateLeek]); % set all plant dates in chronological order
 
-%simulation settingsµ
+%simulation settings
 simplant = simulationSettings.simPlantFlag; % boolean to turn off/on plant proces simulations
 t = simulationSettings.t; % current time of simulation
 

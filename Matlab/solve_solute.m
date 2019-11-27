@@ -69,19 +69,19 @@ RLengthLA = cropStateParams.RLengthLA(:,end);
 plant_uptake_param = [cropConsParams.rorad,cropConsParams.rd0,cropConsParams.g,...
                      0,cropConsParams.rdens0,0];
                  
-crop_type = cropConsParams.crop_type;
 PropFact = [];
 
 % management settings
 harvest_date = sort([managementSettings.hDateCauli;managementSettings.hDateLeek]);
 nsol = managementSettings.nsol;
 plant_date = sort([managementSettings.pDateCauli;managementSettings.pDateLeek]);
-if crop_type ==1
-    PLM2 = managementSettings.PLM2Cauli;
-elseif crop_type == 2
-    PLM2 = managementSettings.PLM2Leek;
-elseif isnan(crop_type)
+
+if ~simulationSettings.flag_double_sim
     PLM2 = [];
+elseif strcmpi(managementSettings.crop_rotation(simulationSettings.ncrop), "Cauli")
+    PLM2 = managementSettings.PLM2Cauli;
+elseif strcmpi(managementSettings.crop_rotation(simulationSettings.ncrop), "Leek")
+    PLM2 = managementSettings.PLM2Leek; 
 end
 ppdepth = managementSettings.ppdepth;
 strategy = managementSettings.fertStrategy;

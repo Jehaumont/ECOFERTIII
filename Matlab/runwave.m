@@ -10,8 +10,6 @@ simplant = simulationSettings.simPlantFlag;
 simsol = simulationSettings.simSolFlag;
 simtemp = simulationSettings.simTempFlag;
 
-crop_type = cropConsParams.crop_type;
-
 %% FUNCTION MAIN BODY
 % Evaluate bc at time t and t+dt, chooses right bc, checks if bc 
     % changed during previous iteration    

@@ -4,12 +4,13 @@
 %
 % J. Haumont 06/03/2019
 
-function [soilInnerStateParams,soilOuterStateParams] = calc_addFert(cropStateParams,...
-                                                                    managementSettings,...
-                                                                    simulationSettings,...
-                                                                    soilCommonStateParams,...
-                                                                    soilInnerStateParams,...
-                                                                    soilOuterStateParams)
+function [soilInnerStateParams,soilOuterStateParams,...
+          soilCommonStateParams] = calc_addFert(cropStateParams,...
+                                                managementSettings,...
+                                                simulationSettings,...
+                                                soilCommonStateParams,...
+                                                soilInnerStateParams,...
+                                                soilOuterStateParams)
 %%%%%%% DOCUMENTATION %%%%%%%
 %%%%% INPUT %%%%%
 % reaminNmin: remaining N concentration in soil [g/cm²] 
@@ -30,14 +31,15 @@ function [soilInnerStateParams,soilOuterStateParams] = calc_addFert(cropStatePar
 % management settings
 KNS_miner_correction = managementSettings.KNS_miner_corr;
 
-fertMoment = [reshape(managementSettings.fertMomentCauli,...
-                      numel(managementSettings.fertMomentCauli),1) + ...
-                      simulationSettings.tstart,...
-              ones(numel(managementSettings.fertMomentCauli),1);...
-              reshape(managementSettings.fertMomentLeek,...
-                      numel(managementSettings.fertMomentLeek),1) + ...
-                      simulationSettings.tstart,...
-              ones(numel(managementSettings.fertMomentLeek),1).*2];
+startdate = datevec(simulationSettings.tstart);
+start_year = startdate(1);
+datenum_start_year = datenum(start_year, 1, 1);
+fert_moment_cauli = sort(reshape(managementSettings.fertMomentCauli,[], 1));
+crop_type_cauli = ones(length(fert_moment_cauli), 1);
+fert_moment_leek = sort(reshape(managementSettings.fertMomentLeek, [], 1));
+crop_type_leek = ones(length(fert_moment_leek), 1)*2;
+fertMoment = [fert_moment_cauli + datenum_start_year - 1, crop_type_cauli;...
+              fert_moment_leek + datenum_start_year - 1, crop_type_leek];
           
 [~,idx] = sort(fertMoment(:,1));
 fertMoment = fertMoment(idx,:);
@@ -54,7 +56,7 @@ tcsolo = soilCommonStateParams.tcsolo; %[g/cm²]
 %% FUNCTION MAIN BODY
 % FIND THE END OF THE TIME WINDOW THAT SHOULD BE REGARDED FOR THE
 % CALCULATION OF THE FERTILIZER ADDITION
-if any(fertMoment(:,1)-t == 1)
+if any(fertMoment(:, 1)-t == 1)
     
     idx = find(fertMoment(:,1)-t == 1); % the current time should be only 1 day before the fertilization moment
     timeNextHarvest = harvest_date(find(t+1>=plant_date & t<=harvest_date,1,'last')); % find the date of the next harvest
@@ -196,6 +198,96 @@ elseif cropType==2
             
             % Correct TV for mineralisation (0.8kgN/day)
             TV = TV-KNS_miner_correction*(timeNextHarvest-t);
+        
+            
+        case 'PSKW_2019_101'
+            TV = [0, 108];
+            
+            soilSampleFlag = 0;
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);
+
+        case 'PSKW_2019_102'
+            
+            TV = [0, 0];
+            soilSampleFlag = 0;
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);
+            
+        case 'PSKW_2019_201'
+            soilSampleFlag = 0;            
+            TV = [0, 159];
+
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);            
+        case 'PSKW_2019_202'
+            TV = [0, 0];
+            soilSampleFlag = 0;
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);            
+        case 'PSKW_2019_301'
+            TV = [0, 0];
+            soilSampleFlag = 0;
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);
+            
+        case 'PSKW_2019_302'
+            TV = [0, 89];
+            soilSampleFlag = 0;
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);
+            
+        case 'PSKW_2019_401'
+            TV = [0, 0];          
+            soilSampleFlag = 0;
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);            
+        case 'PSKW_2019_402'
+            TV = [0, 86];
+            soilSampleFlag = 0;
+            if endTimeWindow < timeNextHarvest
+                index = 1;
+                
+            elseif endTimeWindow == timeNextHarvest
+                index = 2;
+            end
+            TV = TV(index);            
+            
             
         case "N_pre"
             NUptakePredicted = PBLiski(endTimeWindow,"gompInt",strategy,t);
@@ -231,12 +323,16 @@ switch managementSettings.fertStrategy
         soilInnerStateParams.fsol(end+1,:) = [simulationSettings.t+1, 0, addFert/2, addFert/2]; % divide the fertilizer amount equally over ammonium and nitrate
         soilOuterStateParams.fsol(end+1,:) = [simulationSettings.t+1, 0, addFert/2, addFert/2]; % also apply fertilizer outside rooted area
         disp([num2str(addFert),' g/cm² is added to the soil'])
+        
+        soilCommonStateParams.applied_fert(end+1) = addFert;
     
     case "Row"
         
         disp([num2str(addFert),' g/cm² is added to the rooted soil'])        
         soilInnerStateParams.fsol(end+1,:) = [simulationSettings.t+1, 0, addFert/2, addFert/2]; % only apply fertilizer to the rooted area
         soilOuterStateParams.fsol(end+1,:) = [simulationSettings.t+1, 0, 0, 0]; % set fertilizer application outside rooted area to 0, should be specified for correct boundary conditions
+        
+        soilCommonStateParams.applied_fert(end+1) = addFert;
     otherwise
         error("The specified fertilization strategy is not implmented, please choose between 'Broad' or 'Row'")
 end

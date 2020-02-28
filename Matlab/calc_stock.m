@@ -23,7 +23,7 @@ ph = soilStateCilinderParams.ph;
 
 %% FUNCTION MAIN BODY   
 
-WC = moist_ret(ph,soilStateCilinderParams,soilConsParams,update_historic);
+WC = moist_ret(ph, soilStateCilinderParams, soilConsParams, update_historic);
 stock = sum(WC.*dx);
 
 %% FUCNTION OUTPUT

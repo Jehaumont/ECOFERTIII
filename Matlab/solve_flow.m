@@ -86,7 +86,7 @@ no_conv=0;
 
 %% FUNCTION MAIN BODY
 %initial calculations
-[WC,kh,CH,rtex,EPRA]=state_var(cropStateParams,managementSettings,simulationSettings,...
+[WC, kh, CH, rtex, EPRA]= state_var(cropStateParams,managementSettings,simulationSettings,...
     soilConsParams,soilStateCilinderParams,0);
 phB = ph;
 WCB = WC;

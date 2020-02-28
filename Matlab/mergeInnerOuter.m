@@ -32,7 +32,7 @@ if simulationSettings.flag_double_sim == 1
         soilInnerStateParams.minerm(:,2)*fractPlant;
     
     % water balance
-    if soilCommonStateParams.water_balance
+    if size(soilCommonStateParams.water_balance, 2) > 0
         soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
         soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
                                                           (soilInnerStateParams.water_balance(2:4, end) -...
@@ -63,7 +63,7 @@ elseif simulationSettings.flag_double_sim == 0
     soilCommonStateParams.minerm =  soilOuterStateParams.minerm(:,2)*fractSoil;
     
     % water balance
-    if soilCommonStateParams.water_balance % if soilCommonState.water_balance is not empty
+    if size(soilCommonStateParams.water_balance, 1) > 0 % if soilCommonState.water_balance is not empty
         soilCommonStateParams.water_balance(1,end+1) = soilOuterStateParams.water_balance(1, end);
         soilCommonStateParams.water_balance(2:4,end) = soilCommonStateParams.water_balance(2:4, end-1) +...
                                                           (soilOuterStateParams.water_balance(2:4, end) -...
@@ -143,7 +143,6 @@ soilCommonStateParams.N_reaction_balance(:,end+1) =...
                         soilOuterStateParams.N_reaction_balance(:,end-1)) * fractSoil +...
                         (soilInnerStateParams.N_reaction_balance(:,end) -...
                         soilInnerStateParams.N_reaction_balance(:,end-1)) * fractPlant;
-
 
 soilCommonStateParams.daily_mineral(:,end+1) = soilCommonStateParams.minerm;
 

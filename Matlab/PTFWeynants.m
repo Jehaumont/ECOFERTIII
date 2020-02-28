@@ -52,7 +52,7 @@ lambda =    (-1.8642 - 0.1317*clay + 0.0067*sand).*ones(size(bulkd));
 % soilConsParams.wcr = wcr;
 soilConsParams.wcs = wcs;
 soilConsParams.alfa = alpha;
-soilConsParams.N(1:30) = n(1:30);
+%soilConsParams.N(1:30) = n(1:30);
 soilConsParams.lambda = lambda;
 %soilConsParams.ks = Ks;
 

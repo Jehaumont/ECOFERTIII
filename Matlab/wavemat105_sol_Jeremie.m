@@ -81,14 +81,18 @@ end
 climateState = struct();
 climateState.climate = dlmread(fileSettings.ClimatePath);
 climateState = convert_climate_to_matlab(climateState);
-climateState =calc_ET0(climateConsParams,climateState,leekConsParams); % add potential evapotranspiration to the climate data
-climateState = convert_climate_to_daily(climateState,soilConsParams); % convert hourly data to daily data
+climateState = calc_ET0(climateConsParams,climateState, leekConsParams); % add potential evapotranspiration to the climate data
+climateState = convert_climate_to_daily(climateState, fileSettings, soilConsParams); % convert hourly data to daily data
 
 % convert days after startdate to julian date for harvest and plant dates
-managementSettings.pDateLeek = managementSettings.pDateLeek + simulationSettings.tstart;
-managementSettings.pDateCauli = managementSettings.pDateCauli + simulationSettings.tstart;
-managementSettings.hDateLeek = managementSettings.hDateLeek + simulationSettings.tstart;
-managementSettings.hDateCauli = managementSettings.hDateCauli + simulationSettings.tstart;
+datevec_start = datevec(simulationSettings.tstart);
+start_year = datevec_start(1);
+datenum_start = datenum(start_year, 1, 1) -1;
+
+managementSettings.pDateLeek = managementSettings.pDateLeek + datenum_start;
+managementSettings.pDateCauli = managementSettings.pDateCauli + datenum_start;
+managementSettings.hDateLeek = managementSettings.hDateLeek + datenum_start;
+managementSettings.hDateCauli = managementSettings.hDateCauli + datenum_start;
 
 %Also possible to define boundary conditions via in_climatic_data
 [soilConsParams,soilInnerStateParams] = In_Boundary_conditions(2,climateState,...
@@ -150,7 +154,7 @@ harvest_date = sort([managementSettings.hDateCauli;managementSettings.hDateLeek]
     
 %% MODEL SIMULATION
 calculationtime_day = [];
-while simulationSettings.t <= simulationSettings.tmax
+while simulationSettings.t < simulationSettings.tmax
     tic
 
     % calculate hydraulic properties based on the Weynats pedo transfer function
@@ -163,7 +167,7 @@ while simulationSettings.t <= simulationSettings.tmax
     day = simulationSettings.t-simulationSettings.tstart +1;
     % determine the number of the rotation and whether soil AND plant
     % should be simulated or only soil
-    simulationSettings = find_cropnumber(managementSettings,simulationSettings);
+    simulationSettings = find_cropnumber(managementSettings, simulationSettings);
 
     %% PLANT MODULE
     
@@ -207,7 +211,7 @@ while simulationSettings.t <= simulationSettings.tmax
                                             simulationSettings,soilCommonStateParams,...
                                             soilInnerStateParams,soilOuterStateParams);
             
-            if any(managementSettings.hDateCauli == simulationSettings.t)
+            if any(managementSettings.hDateCauli - 1 == simulationSettings.t)
                 cropStateParams = dataLog(cropStateParams, "Cauli", fileSettings, "Force");
             else
                 cropStateParams = dataLog(cropStateParams, "Cauli", fileSettings);
@@ -228,8 +232,7 @@ while simulationSettings.t <= simulationSettings.tmax
                                                            soilInnerStateParams,...
                                                            soilOuterStateParams);
             
-            if any(managementSettings.hDateLeek == simulationSettings.t)
-                
+            if any(managementSettings.hDateLeek - 1 == simulationSettings.t)
                 cropStateParams = dataLog(cropStateParams, "Leek", fileSettings, "Force");
             else
                 cropStateParams = dataLog(cropStateParams, "Leek", fileSettings);
@@ -239,9 +242,9 @@ while simulationSettings.t <= simulationSettings.tmax
         % apply irrigation to boundary conditions
         i=max(find(soilOuterStateParams.BOUNDARY_CONDITIONS_MATRIX(:,1)<=simulationSettings.t));
         soilOuterStateParams.BOUNDARY_CONDITIONS_MATRIX(i,3) = soilOuterStateParams.BOUNDARY_CONDITIONS_MATRIX(i,3) + ...
-            soilOuterStateParams.epa + soilOuterStateParams.esa - managementSettings.irri; %no plant simulation
+            soilOuterStateParams.epa + soilOuterStateParams.esa - climateState.climateDaily(i, 4); %no plant simulation
         soilInnerStateParams.BOUNDARY_CONDITIONS_MATRIX(i,3) = soilInnerStateParams.BOUNDARY_CONDITIONS_MATRIX(i,3) + ...
-            soilInnerStateParams.epa + soilInnerStateParams.esa - managementSettings.irri; %plant simulation
+            soilInnerStateParams.epa + soilInnerStateParams.esa - climateState.climateDaily(i, 4); %plant simulation
         
     elseif ~simulationSettings.flag_double_sim
         
@@ -509,13 +512,13 @@ while simulationSettings.t <= simulationSettings.tmax
                                                  soilCommonStateParams,...
                                                  soilInnerStateParams,...
                                                  soilOuterStateParams);
-    
     %Save data of commonstate parameters to external storage
     fieldNames = {'und_time','unc_time', 'water_storage',...
                   'WCSoil_log', 'UreumSoil_log','NH4Soil_log',...
                   'NO3Soil_log', 'UreumBalance_log',...
                   'NH4Balance_log', 'NO3Balance_log', 'N_reaction_balance',...
-                  'daily_mineral','JulianDay','TSoil', 'water_balance'};
+                  'daily_mineral','JulianDay','TSoil', 'water_balance',...
+                  'applied_fert'};
     
     if simulationSettings.t == simulationSettings.tmax | (soilInnerStateParams.STOP | soilOuterStateParams.STOP)
         soilCommonStateParams = dataLog(soilCommonStateParams, "SoilCommonStateParams",...
@@ -620,45 +623,22 @@ while simulationSettings.t <= simulationSettings.tmax
         disp('Organic Matter was reset..');
     end
     
-    %% MANAGEMENT MODULE
-    if simulationSettings.flag_double_sim % only calculate management practices when plant are simulated
-        
-        %AUTOIRRIGATIE-----------------------------------------------------
-        if ~parallelFlag
-            waitbar(progress/100,WAITBAR,[string(['simulating day ',num2str(day)]);strcat(num2str(progress),'% of the simulation is completed');...
-                "APPLYING MANAGEMENT PRACTICES"],'Name',"ECOFERT simulation",'height',500)
-            
-            if getappdata(WAITBAR,'canceling')
-                
-                delete(WAITBAR)
-                error(['The simulation has been stopped manually the results or',...
-                    ' progress are stored in ',char(ResultsPath)])                
-            end
-        end
-        
-        soilCommonStateParams = calc_FC(cropStateParams,soilCommonStateParams,soilConsParams); %optimal water
-        soilCommonStateParams.WCFC = soilCommonStateParams.WCFC * 0.5;
-        soilCommonStateParams.waterinrootzone =...
-            sum(soilCommonStateParams.WCSoil_log(1:cropStateParams.TotRootDepth(end),end)); %available water
-        if soilCommonStateParams.WCFC > soilCommonStateParams.waterinrootzone
-            managementSettings.irri = soilCommonStateParams.WCFC -...
-                soilCommonStateParams.waterinrootzone;
-        else
-            managementSettings.irri = 0;
-        end
-        
-    end
-    if (any(simulationSettings.t == sort(reshape(managementSettings.fertMomentCauli,...
-            numel(managementSettings.fertMomentCauli),1))+simulationSettings.tstart-1)...
-            | any(simulationSettings.t == sort(reshape(managementSettings.fertMomentLeek,...
-            numel(managementSettings.fertMomentLeek),1))+simulationSettings.tstart-1))...
-            & simulationSettings.calcAddFertFlag % check wheter fertilizer should be applied the next day AND if the user enabled calcAddfert 
-        
-        
+    %% MANAGEMENT MODULE    
+    startdate = datevec(simulationSettings.tstart);
+    start_year = startdate(1);
+    datenum_start_year = datenum(start_year, 1, 1);
+    fert_moment_cauli = sort(reshape(managementSettings.fertMomentCauli,[],1));
+    fert_moment_leek = sort(reshape(managementSettings.fertMomentLeek, [], 1));
+    
+    cauli_cond = any(simulationSettings.t + 1 == fert_moment_cauli + datenum_start_year -1);
+    leek_cond = any(simulationSettings.t + 1 == fert_moment_leek + datenum_start_year -1);
+    
+    if (cauli_cond | leek_cond) & simulationSettings.calcAddFertFlag %check wheter fertilizer should be applied the next day AND if the user enabled calcAddfert         
         % calculate remaining amonium and nitrogen in the soil and apply the
         % required amount the next to fulfill the target values depending on
         % the method of calculating the target values
-        [soilInnerStateParams, soilOuterStateParams] = calc_addFert(cropStateParams,...
+        [soilInnerStateParams, soilOuterStateParams, ...
+            soilCommonStateParams] = calc_addFert(cropStateParams,...
                                                                   managementSettings,...
                                                                   simulationSettings,...
                                                                   soilCommonStateParams,...

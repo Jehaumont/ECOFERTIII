@@ -13,7 +13,7 @@ simplant = simulationSettings.simPlantFlag; % boolean to turn off/on plant proce
 t = simulationSettings.t; % current time of simulation
 
 %% FUNCTION MAIN BODY
-isInGrowingSeason = t>=plant_date & t<= harvest_date; % check whether on the current simulation there should be a plant on the field
+isInGrowingSeason = t>=plant_date & t<= (harvest_date - 1); % check whether on the current simulation there should be a plant on the field
 
 if any(isInGrowingSeason) % check if t is between planting and harvest date for any crop rotation
     ncrop = find(isInGrowingSeason); % find the number of the crop rotation for which t is inbetween harvest and planting

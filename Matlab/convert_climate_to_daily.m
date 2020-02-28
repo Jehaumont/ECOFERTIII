@@ -1,4 +1,4 @@
-function climateState =convert_climate_to_daily(climateState,soilConsParams)
+function climateState = convert_climate_to_daily(climateState, fileSettings, soilConsParams)
 %% FUNCTION INPUT
 %climatedata
 crop_climate = climateState.crop_climate; % climate data [matlabTime,radiation,temperature,relative humidity,rain]
@@ -6,6 +6,13 @@ ET0_cm_per_day = climateState.ET0_cm_per_day; % potential evapotranspiration fol
 
 %soil constant parameters
 irri = soilConsParams.irri;
+
+if isfield(fileSettings, 'irri_file')
+	irri = load(fileSettings.irri_file);
+else
+    irri = zeros(1, 3);
+end
+
 
 %% FUNCTION MAIN BODY 
 %Summarize data files to daily files
@@ -24,12 +31,13 @@ theta_table(:,2) = ET0_cm_per_day';
 theta_table(:,3) = dailyrain;
 theta_table(:,4) = 0;
 
-for i=1:length(irri)
-    index = (find(irri(i) == theta_table(:,1)));
-    if isempty(index)==0
-        theta_table(index,4) = irri(i,2);
-    end    
+if length(irri) == 1
+    theta_table(:,4) = irri(3);
+else
+    theta_table(:, 4) = irri(:, 3);
 end
+
+
 
 temp_table =(min(uniquetimes):max(uniquetimes))';
 temp_table(:,3) = temp_max;

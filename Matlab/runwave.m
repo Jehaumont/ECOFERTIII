@@ -42,26 +42,6 @@ simtemp = simulationSettings.simTempFlag;
     
 soilStateCilinderParams =  wat_intgr(simulationSettings,soilConsParams,soilStateCilinderParams);
 
-% % % % % soilStateCilinderParams = store_data(climateState,simulationSettings,soilStateCilinderParams);
-% % % % % 
-% % % % % %store Concentration
-% % % % % soilStateCilinderParams = store_cm(managementSettings,simulationSettings,soilStateCilinderParams);
-% % % % % 
-% % % % % %Store organic matter pools
-% % % % % soilStateCilinderParams = store_om(simulationSettings,soilStateCilinderParams);
-% % % % % 
-% % % % % %Store absolute values of solute
-% % % % % soilStateCilinderParams = store_tc(managementSettings,simulationSettings,soilStateCilinderParams);
-% % % % % 
-% % % % % %Store Mass balance information for the solutes.
-% % % % % soilStateCilinderParams = store_solute_balance(managementSettings,simulationSettings,soilStateCilinderParams);
-% % % % % 
-% % % % % %Store nitrogen balance
-% % % % % soilStateCilinderParams = store_nit(soilStateCilinderParams);
-% % % % % 
-% % % % % %Store temperature
-% % % % % soilStateCilinderParams = store_T(simulationSettings, soilStateCilinderParams);
-
 % Calculation of delta t
 simulationSettings.t = simulationSettings.t + soilStateCilinderParams.dt;
 

@@ -4,7 +4,7 @@ if nargin == 3
     force = false;
     fieldNames = 'all';
 
-elseif nargin ==4 
+elseif nargin == 4 
     fieldNames = 'all';
 end
 
